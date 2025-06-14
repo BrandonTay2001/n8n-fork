@@ -4,6 +4,9 @@ import { useCanvasNode } from '@/composables/useCanvasNode';
 import { computed, ref, useCssModule } from 'vue';
 import type { CanvasNodeDefaultRender } from '@/types';
 import { useI18n } from '@/composables/useI18n';
+import { useNodeCreatorStore } from '@/stores/nodeCreator.store';
+import { useUIStore } from '@/stores/ui.store';
+import { NODE_CREATOR_OPEN_SOURCES, WORKFLOW_NODES_MODAL } from '@/constants';
 
 const emit = defineEmits<{
 	add: [];
@@ -13,6 +16,8 @@ const $style = useCssModule();
 
 const i18n = useI18n();
 const { render } = useCanvasNode();
+const nodeCreatorStore = useNodeCreatorStore();
+const uiStore = useUIStore();
 const { label, isConnected, isConnecting, isReadOnly, isRequired, runData } = useCanvasNodeHandle();
 
 const handleClasses = 'source';
@@ -47,8 +52,8 @@ const plusLineSize = computed(
 	() =>
 		({
 			small: 46,
-			medium: 66,
-			large: 80,
+			medium: 70,
+			large: 90,
 		})[(runDataTotal.value > 0 ? 'large' : renderOptions.value.outputs?.labelSize) ?? 'small'],
 );
 
@@ -72,6 +77,7 @@ function onMouseLeave() {
 
 function onClickAdd() {
 	emit('add');
+	uiStore.openModal(WORKFLOW_NODES_MODAL);
 }
 </script>
 <template>

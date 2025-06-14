@@ -70,6 +70,7 @@ export const PROJECT_MOVE_RESOURCE_MODAL = 'projectMoveResourceModal';
 export const NEW_ASSISTANT_SESSION_MODAL = 'newAssistantSession';
 export const EXTERNAL_SECRETS_PROVIDER_MODAL_KEY = 'externalSecretsProvider';
 export const COMMUNITY_PLUS_ENROLLMENT_MODAL = 'communityPlusEnrollment';
+export const WORKFLOW_NODES_MODAL = 'workflowNodes';
 
 export const COMMUNITY_PACKAGE_MANAGE_ACTIONS = {
 	UNINSTALL: 'uninstall',
@@ -464,6 +465,7 @@ export const TEMPLATES_NODES_FILTER = ['n8n-nodes-base.start', 'n8n-nodes-base.r
 
 export const enum VIEWS {
 	HOMEPAGE = 'Homepage',
+	PROFILE = 'Profile',
 	COLLECTION = 'TemplatesCollectionView',
 	EXECUTIONS = 'Executions',
 	EXECUTION_PREVIEW = 'ExecutionPreview',

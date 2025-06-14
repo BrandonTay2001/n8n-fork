@@ -14,18 +14,17 @@ import { useWorkflowsStore } from '@/stores/workflows.store';
 import { hasPermission } from '@/utils/rbac/permissions';
 import { useDebounce } from '@/composables/useDebounce';
 import { useExternalHooks } from '@/composables/useExternalHooks';
-import { useI18n } from '@/composables/useI18n';
 import { useTelemetry } from '@/composables/useTelemetry';
 import { useUserHelpers } from '@/composables/useUserHelpers';
 
 import { ABOUT_MODAL_KEY, VERSIONS_MODAL_KEY, VIEWS } from '@/constants';
-import { useBugReporting } from '@/composables/useBugReporting';
 import { usePageRedirectionHelper } from '@/composables/usePageRedirectionHelper';
 
-import { useGlobalEntityCreation } from '@/composables/useGlobalEntityCreation';
 import { N8nNavigationDropdown } from 'n8n-design-system';
 import { onClickOutside, type VueInstance } from '@vueuse/core';
 import Logo from './Logo/Logo.vue';
+
+import { Globe, LogOut, SquarePen } from 'lucide-vue-next';
 
 const becomeTemplateCreatorStore = useBecomeTemplateCreatorStore();
 const cloudPlanStore = useCloudPlanStore();
@@ -39,14 +38,16 @@ const workflowsStore = useWorkflowsStore();
 
 const { callDebounced } = useDebounce();
 const externalHooks = useExternalHooks();
-const i18n = useI18n();
 const route = useRoute();
 const router = useRouter();
 const telemetry = useTelemetry();
 const pageRedirectionHelper = usePageRedirectionHelper();
-const { getReportingURL } = useBugReporting();
 
 useUserHelpers(router, route);
+
+import telegram from '@/assets/telegram.png';
+import xTwitter from '@/assets/xtwitter.png';
+import linkedin from '@/assets/linkedin.png';
 
 // Template refs
 const user = ref<Element | null>(null);
@@ -54,17 +55,21 @@ const user = ref<Element | null>(null);
 // Component data
 const basePath = ref('');
 const fullyExpanded = ref(false);
-const userMenuItems = ref([
-	{
-		id: 'settings',
-		label: i18n.baseText('settings'),
-	},
-]);
 
 const mainMenuItems = computed(() => [
 	{
+		id: 'about',
+		icon: Globe,
+		label: 'Website',
+		link: {
+			href: 'https://www.google.com/',
+			target: '_blank',
+		},
+		position: 'bottom',
+	},
+	{
 		id: 'telegram',
-		icon: 'fa-brands fa-telegram',
+		icon: telegram,
 		label: 'Telegram',
 		link: {
 			href: 'https://telegram.org/',
@@ -74,8 +79,8 @@ const mainMenuItems = computed(() => [
 	},
 	{
 		id: 'x',
-		icon: 'x-twitter',
-		label: 'X',
+		icon: xTwitter,
+		label: 'Twitter/X',
 		link: {
 			href: 'https://x.com/',
 			target: '_blank',
@@ -84,20 +89,10 @@ const mainMenuItems = computed(() => [
 	},
 	{
 		id: 'docs',
-		icon: 'book',
-		label: 'Docs/Whitepaper',
+		icon: linkedin,
+		label: 'Linkedin',
 		link: {
-			href: 'https://www.google.com/',
-			target: '_blank',
-		},
-		position: 'bottom',
-	},
-	{
-		id: 'about',
-		icon: 'globe',
-		label: 'Website',
-		link: {
-			href: 'https://www.google.com/',
+			href: 'http://linkedin.com/',
 			target: '_blank',
 		},
 		position: 'bottom',
@@ -151,33 +146,12 @@ const trackHelpItemClick = (itemType: string) => {
 	});
 };
 
-const onUserActionToggle = (action: string) => {
-	switch (action) {
-		case 'logout':
-			onLogout();
-			break;
-		case 'settings':
-			void router.push({ name: VIEWS.SETTINGS });
-			break;
-		default:
-			break;
-	}
+const navigateTo = () => {
+	void router.push({ name: VIEWS.PROFILE });
 };
 
 const onLogout = () => {
 	void router.push({ name: VIEWS.SIGNOUT });
-};
-
-const toggleCollapse = () => {
-	uiStore.toggleSidebarMenuCollapse();
-	// When expanding, delay showing some element to ensure smooth animation
-	if (!isCollapsed.value) {
-		setTimeout(() => {
-			fullyExpanded.value = !isCollapsed.value;
-		}, 300);
-	} else {
-		fullyExpanded.value = !isCollapsed.value;
-	}
 };
 
 const openUpdatesPanel = () => {
@@ -229,13 +203,6 @@ const checkWidthAndAdjustSidebar = async (width: number) => {
 	}
 };
 
-const {
-	menu,
-	handleSelect: handleMenuSelect,
-	createProjectAppendSlotName,
-	projectsLimitReachedMessage,
-	upgradeLabel,
-} = useGlobalEntityCreation();
 onClickOutside(createBtn as Ref<VueInstance>, () => {
 	createBtn.value?.close();
 });
@@ -250,40 +217,12 @@ onClickOutside(createBtn as Ref<VueInstance>, () => {
 			[$style.sideMenuCollapsed]: isCollapsed,
 		}"
 	>
-		<div
-			id="collapse-change-button"
-			:class="['clickable', $style.sideMenuCollapseButton]"
-			@click="toggleCollapse"
-		>
-			<N8nIcon v-if="isCollapsed" icon="chevron-right" size="xsmall" class="ml-5xs" />
-			<N8nIcon v-else icon="chevron-left" size="xsmall" class="mr-5xs" />
-		</div>
 		<div :class="$style.logo">
 			<Logo
 				location="sidebar"
 				:collapsed="isCollapsed"
 				:release-channel="settingsStore.settings.releaseChannel"
 			/>
-			<N8nNavigationDropdown
-				ref="createBtn"
-				data-test-id="universal-add"
-				:menu="menu"
-				@select="handleMenuSelect"
-			>
-				<N8nIconButton icon="plus" type="secondary" outline />
-				<template #[createProjectAppendSlotName]="{ item }">
-					<N8nTooltip v-if="item.disabled" placement="right" :content="projectsLimitReachedMessage">
-						<N8nButton
-							:size="'mini'"
-							style="margin-left: auto"
-							type="tertiary"
-							@click="handleMenuSelect(item.id)"
-						>
-							{{ upgradeLabel }}
-						</N8nButton>
-					</N8nTooltip>
-				</template>
-			</N8nNavigationDropdown>
 		</div>
 		<N8nMenu :items="mainMenuItems" :collapsed="isCollapsed" @select="handleSelect">
 			<template #header>
@@ -319,45 +258,30 @@ onClickOutside(createBtn as Ref<VueInstance>, () => {
 					<MainSidebarSourceControl :is-collapsed="isCollapsed" />
 				</div>
 			</template>
-			<template v-if="showUserArea" #footer>
-				<div ref="user" :class="$style.userArea">
-					<div class="ml-3xs" data-test-id="main-sidebar-user-menu">
-						<!-- This dropdown is only enabled when sidebar is collapsed -->
-						<ElDropdown placement="right-end" trigger="click" @command="onUserActionToggle">
-							<div :class="{ [$style.avatar]: true, ['clickable']: isCollapsed }">
-								<N8nAvatar
-									:first-name="usersStore.currentUser?.firstName"
-									:last-name="usersStore.currentUser?.lastName"
-									size="small"
-								/>
-							</div>
-							<template v-if="isCollapsed" #dropdown>
-								<ElDropdownMenu>
-									<ElDropdownItem command="settings">
-										{{ i18n.baseText('settings') }}
-									</ElDropdownItem>
-								</ElDropdownMenu>
-							</template>
-						</ElDropdown>
-					</div>
-					<div
-						:class="{ ['ml-2xs']: true, [$style.userName]: true, [$style.expanded]: fullyExpanded }"
-					>
-						<N8nText size="small" :bold="true" color="text-dark">{{
-							usersStore.currentUser?.fullName
-						}}</N8nText>
-					</div>
-					<div :class="{ [$style.userActions]: true, [$style.expanded]: fullyExpanded }">
-						<N8nActionDropdown
-							:items="userMenuItems"
-							placement="top-start"
-							data-test-id="user-menu"
-							@select="onUserActionToggle"
-						/>
-					</div>
-				</div>
-			</template>
 		</N8nMenu>
+
+		<div v-if="showUserArea" :class="$style.footer">
+			<div ref="user" :class="$style.userArea" @click="navigateTo">
+				<N8nAvatar
+					:first-name="usersStore.currentUser?.firstName"
+					:last-name="usersStore.currentUser?.lastName"
+					size="medium"
+				/>
+				<div
+					:class="{ ['ml-2xs']: true, [$style.userName]: true, [$style.expanded]: fullyExpanded }"
+				>
+					<N8nText size="small" :bold="true" color="text-dark">{{
+						usersStore.currentUser?.fullName
+					}}</N8nText>
+				</div>
+
+				<SquarePen :class="$style.editIcon" />
+			</div>
+
+			<!-- <div :class="$style.logout" @click="onLogout">
+				<LogOut />
+			</div> -->
+		</div>
 	</div>
 </template>
 
@@ -365,21 +289,21 @@ onClickOutside(createBtn as Ref<VueInstance>, () => {
 .sideMenu {
 	position: relative;
 	height: 100%;
-	border-right: var(--border-width-base) var(--border-style-base) var(--color-foreground-base);
 	transition: width 150ms ease-in-out;
 	width: $sidebar-expanded-width;
-	padding-top: 54px;
-	background-color: var(--menu-background, var(--color-background-xlight));
 
 	.logo {
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 100%;
 		display: flex;
 		align-items: center;
-		padding: var(--spacing-xs);
+		padding: 10px var(--spacing-xs);
 		justify-content: space-between;
+		height: 52px;
+
+		background-color: #f7f9fb;
+		box-shadow: 0px 0px 3px 0px #0000001f;
+		border: 1px solid #e9e9e9;
+
+		margin: 15px 0px 15px 8px;
 
 		img {
 			position: relative;
@@ -444,37 +368,41 @@ onClickOutside(createBtn as Ref<VueInstance>, () => {
 	}
 }
 
-.userArea {
+.footer {
+	height: 52px;
+	margin: 15px 0px 15px 8px;
 	display: flex;
-	padding: var(--spacing-xs);
-	align-items: center;
-	height: 60px;
-	border-top: var(--border-width-base) var(--border-style-base) var(--color-foreground-base);
+	gap: 16px;
 
-	.userName {
-		display: none;
-		overflow: hidden;
-		width: 100px;
-		white-space: nowrap;
-		text-overflow: ellipsis;
-
-		&.expanded {
-			display: initial;
-		}
-
-		span {
-			overflow: hidden;
-			text-overflow: ellipsis;
-		}
+	.userArea,
+	.logout {
+		height: 100%;
+		border: 1px solid #e9e9e9;
+		box-shadow: 0px 0px 3px 0px #0000001f;
+		background: #f7f9fb;
+		display: flex;
+		align-items: center;
 	}
 
-	.userActions {
-		display: none;
+	.userArea {
+		flex: 1;
+		padding: 8px 16px;
+		cursor: pointer;
 
-		&.expanded {
-			display: initial;
+		.editIcon {
+			width: 18px;
+			margin-left: auto;
 		}
 	}
+	.logout {
+		width: 54px;
+		justify-content: center;
+		cursor: pointer;
+	}
+}
+
+.footer:hover {
+	text-decoration: underline;
 }
 
 @media screen and (max-height: 470px) {

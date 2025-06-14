@@ -15,6 +15,7 @@ interface TabOptions {
 }
 
 interface TabsProps {
+	fullWidth?: boolean;
 	modelValue?: Value;
 	options?: TabOptions[];
 }
@@ -81,12 +82,12 @@ const scrollRight = () => scroll(50);
 		<div v-if="canScrollRight" :class="$style.next" @click="scrollRight">
 			<N8nIcon icon="chevron-right" size="small" />
 		</div>
-		<div ref="tabs" :class="$style.tabs">
+		<div ref="tabs" :class="[$style.tabs, { [$style.fullWidth]: fullWidth }]">
 			<div
 				v-for="option in options"
 				:id="option.value.toString()"
 				:key="option.value"
-				:class="{ [$style.alignRight]: option.align === 'right' }"
+				:class="{ [$style.tabDiv]: true, [$style.alignRight]: option.align === 'right' }"
 			>
 				<N8nTooltip :disabled="!option.tooltip" placement="bottom">
 					<template #content>
@@ -132,19 +133,26 @@ const scrollRight = () => scroll(50);
 <style lang="scss" module>
 .container {
 	position: relative;
-	height: 24px;
-	min-height: 24px;
+	min-height: 50px;
 	width: 100%;
 }
 
 .tabs {
 	color: var(--color-text-base);
 	font-weight: var(--font-weight-bold);
+	background: #fafafa;
 	display: flex;
 	align-items: center;
-	width: 100%;
 	position: absolute;
 	overflow-x: scroll;
+	border-radius: 10px;
+	overflow: hidden;
+	border: 1px solid #e9e9e9;
+	box-shadow: 0px 0px 2px 0px #0000001f;
+
+	&.fullWidth {
+		width: 100%;
+	}
 
 	/* Hide scrollbar for Chrome, Safari and Opera */
 	&::-webkit-scrollbar {
@@ -156,28 +164,50 @@ const scrollRight = () => scroll(50);
 	scrollbar-width: none; /* Firefox */
 }
 
-.tab {
-	--active-tab-border-width: 2px;
-	display: block;
-	padding: 0 var(--spacing-s);
-	padding-bottom: calc(var(--spacing-2xs) + var(--active-tab-border-width));
-	font-size: var(--font-size-s);
-	cursor: pointer;
-	white-space: nowrap;
-	color: var(--color-text-base);
-	&:hover {
-		color: var(--color-primary);
-	}
+.tabDiv {
+	flex: 1;
+	.tab {
+		--active-tab-border-width: 2px;
+		padding: 0 var(--spacing-s);
+		font-size: var(--font-size-s);
+		cursor: pointer;
+		white-space: nowrap;
+		color: var(--color-text-base);
 
-	span + span {
-		margin-left: var(--spacing-4xs);
+		height: 47px;
+		min-width: 150px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border-right: 2px solid #e9e9e9;
+		flex: 1;
+		width: 100%;
+
+		&:hover {
+			color: black;
+		}
+
+		span + span {
+			margin-left: var(--spacing-4xs);
+		}
 	}
 }
 
+.tabs > div:last-child > .tab {
+	border-right: 0;
+}
+.tabs > div:first-child > .tab {
+	border-top-left-radius: 10px;
+	border-bottom-left-radius: 10px;
+}
+.tabs > div:last-child > .tab {
+	border-top-right-radius: 10px;
+	border-bottom-right-radius: 10px;
+}
+
 .activeTab {
-	color: var(--color-primary);
-	padding-bottom: var(--spacing-2xs);
-	border-bottom: var(--color-primary) var(--active-tab-border-width) solid;
+	color: black;
+	border: 1px solid #383838 !important;
 }
 
 .alignRight:not(.alignRight + .alignRight) {
