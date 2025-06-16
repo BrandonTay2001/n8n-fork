@@ -2,5 +2,4 @@ docker
 flask
 pyyaml
 python-dotenv
-kubernetes
 pymongo
