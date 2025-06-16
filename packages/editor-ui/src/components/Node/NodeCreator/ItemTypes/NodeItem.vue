@@ -138,20 +138,6 @@ function onCommunityNodeTooltipClick(event: MouseEvent) {
 			<NodeIcon :class="$style.nodeIcon" :node-type="nodeType" />
 		</template>
 
-		<template v-if="isCommunityNode" #tooltip>
-			<p
-				:class="$style.communityNodeIcon"
-				@click="onCommunityNodeTooltipClick"
-				v-n8n-html="
-					i18n.baseText('generic.communityNode.tooltip', {
-						interpolate: {
-							packageName: nodeType.name.split('.')[0],
-							docURL: COMMUNITY_NODES_INSTALLATION_DOCS_URL,
-						},
-					})
-				"
-			/>
-		</template>
 		<template #dragContent>
 			<div
 				ref="draggableDataTransfer"

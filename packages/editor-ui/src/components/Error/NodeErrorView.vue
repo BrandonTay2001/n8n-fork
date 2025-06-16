@@ -535,7 +535,7 @@ async function onAskAssistantClick() {
 					</div>
 				</details>
 
-				<details class="node-error-view__details">
+				<!-- <details class="node-error-view__details">
 					<summary class="node-error-view__details-summary">
 						<font-awesome-icon class="node-error-view__details-icon" icon="angle-right" />
 						{{ i18n.baseText('nodeErrorView.details.info') }}
@@ -645,7 +645,7 @@ async function onAskAssistantClick() {
 							<pre class="node-error-view__details-value"><code>{{ error.stack }}</code></pre>
 						</div>
 					</div>
-				</details>
+				</details> -->
 			</div>
 		</div>
 	</div>

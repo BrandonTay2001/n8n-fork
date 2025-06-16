@@ -357,13 +357,16 @@ async function handleFileImport(): Promise<void> {
 				console.log(encryptedData);
 
 				// Call the decryption API
-				const response = await fetch('http://127.0.0.1:5000/crypto/decrypt', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
+				const response = await fetch(
+					'https://test-marketflowz-backend-jq3ut.ondigitalocean.app/crypto/decrypt',
+					{
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify(encryptedData),
 					},
-					body: JSON.stringify(encryptedData),
-				});
+				);
 
 				if (!response.ok) {
 					throw new Error(`HTTP error! status: ${response.status}`);
@@ -423,13 +426,16 @@ async function onWorkflowMenuSelect(action: WORKFLOW_MENU_ACTIONS): Promise<void
 			};
 
 			// before downloading, encrypt the workflow data
-			const encryptedData = await fetch('http://127.0.0.1:5000/crypto/encrypt', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
+			const encryptedData = await fetch(
+				'https://test-marketflowz-backend-jq3ut.ondigitalocean.app/crypto/encrypt',
+				{
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify(exportData),
 				},
-				body: JSON.stringify(exportData),
-			});
+			);
 
 			if (!encryptedData.ok) {
 				throw new Error(`HTTP error! status: ${encryptedData.status}`);

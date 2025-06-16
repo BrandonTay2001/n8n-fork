@@ -1,6 +1,6 @@
 services:
   n8n:
-    image: n8n-custom:latest
+    image: 5quidw4rd/n8n-custom:latest
     restart: always
     ports:
       - "127.0.0.1:5678:5678"
@@ -13,6 +13,7 @@ services:
       - N8N_PROTOCOL=http
       - WEBHOOK_URL=http://localhost:5678/
       - GENERIC_TIMEZONE=Europe/Berlin
+      - N8N_PERSONALIZATION_ENABLED=false
     volumes:
       - n8n_data:/home/node/.n8n
 

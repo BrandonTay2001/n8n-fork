@@ -57,7 +57,12 @@ def create_compose_config(username, randomised_port):
                     'N8N_PROTOCOL': 'https',
                     'NODE_ENV': 'production',
                     'WEBHOOK_URL': f'https://{username}.{domain}/',
-                    'GENERIC_TIMEZONE': 'Europe/Berlin'
+                    'GENERIC_TIMEZONE': 'Europe/Berlin',
+                    'EXTERNAL_HOOK_FILES': '/home/node/.n8n/hooks.js',
+                    'LOGIN_EMAIL': 'email@email.com',
+                    'LOGIN_PASSWORD': 'password',
+                    'N8N_HIDE_USAGE_PAGE': 'true',
+                    'N8N_PERSONALIZATION_ENABLED': 'false'
                 },
                 'volumes': [
                     f'n8n_data_{username}:/home/node/.n8n'
