@@ -1,7 +1,10 @@
 ARG NODE_VERSION=20
 
 # 1. Create an image to build n8n
-FROM --platform=linux/amd64 n8nio/base:${NODE_VERSION} AS builder
+FROM 5quidw4rd/n8n-base-arm:latest AS builder
+
+# Install pnpm
+#RUN npm install -g pnpm
 
 # Build the application from source
 WORKDIR /src
@@ -21,10 +24,13 @@ RUN mkdir /compiled
 RUN NODE_ENV=production DOCKER_BUILD=true pnpm --filter=n8n --prod --no-optional deploy /compiled
 
 # 2. Start with a new clean image with just the code that is needed to run n8n
-FROM n8nio/base:${NODE_VERSION}
+FROM 5quidw4rd/n8n-base-arm:latest
 ENV NODE_ENV=production
 
-ARG N8N_RELEASE_TYPE=dev
+# Install pnpm in the final image as well
+#RUN npm install -g pnpm
+
+ARG N8N_RELEASE_TYPE=stable
 ENV N8N_RELEASE_TYPE=${N8N_RELEASE_TYPE}
 
 WORKDIR /home/node
@@ -59,6 +65,13 @@ RUN \
 	chown node:node .n8n
 
 COPY provision/hooks.js /home/node/.n8n/hooks.js
+
+RUN mkdir -p /home/node/.n8n/nodes && \
+	cd /home/node/.n8n/nodes && \
+	npm i @majus/n8n-nodes-web3 && \
+	npm i n8n-nodes-solanaoperations && \
+	chown -R node:node /home/node/.n8n
+
 ENV SHELL /bin/sh
 USER node
 ENTRYPOINT ["tini", "--", "/docker-entrypoint.sh"]
