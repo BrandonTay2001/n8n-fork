@@ -47,7 +47,6 @@ services:
       - traefik.http.services.provision.loadbalancer.server.port=9000
       - traefik.http.routers.provision.tls=true
       - traefik.http.routers.provision.entrypoints=websecure
-      - traefik.http.routers.provision.tls.certresolver=mytlschallenge
 
 volumes:
   traefik_data:
