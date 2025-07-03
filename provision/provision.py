@@ -22,6 +22,7 @@ db_password = os.getenv('DB_PASSWORD')
 uri = f"mongodb+srv://akaneai420:{db_password}@cluster0.jwyab3g.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 mongo_client = MongoClient(uri, server_api=ServerApi('1'))
 users_mono = mongo_client['flowstate']['users-monolith']
+users_dist = mongo_client['flowstate']['users-distributed']
 
 def is_port_in_use(port):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -75,6 +76,64 @@ def create_compose_config(username, randomised_port, email=''):
         'volumes': {
             f'n8n_data_{username}': {
                 'name': f'n8n_data_{username}'
+            }
+        }
+    }
+
+def create_compose_config_distributed(username, randomised_port, resource, email=''):
+    return {
+        'networks': {
+            'swarm-network': {
+                'external': True
+            }
+        },
+        'services': {
+            'n8n': {
+                'image': '5quidw4rd/n8n-custom-amd:latest',
+                'deploy': {
+                    'replicas': 1,
+                    'placement': {
+                        'constraints': [f'node.labels.resource == {resource}']
+                    },
+                    'restart_policy': {
+                        'condition': 'any',
+                        'delay': '5s',
+                        'max_attempts': 3,
+                        'window': '120s'
+                    }
+                },
+                'networks': ['swarm-network'],
+                'ports': [str(f'{randomised_port}:5678')],
+                'labels': {
+                    'traefik.enable': 'true',
+                    'traefik.http.routers.n8n-{}.rule'.format(username): f'Host(`{username}.{domain}`)',
+                    'traefik.http.routers.n8n-{}.tls'.format(username): 'true',
+                    'traefik.http.routers.n8n-{}.entrypoints'.format(username): 'web,websecure',
+                    'traefik.http.routers.n8n-{}.tls.certresolver'.format(username): 'mytlschallenge',
+                },
+                'environment': {
+                    'N8N_HOST': f'{username}.{domain}',
+                    'N8N_PORT': '5678',
+                    'N8N_PROTOCOL': 'https',
+                    'NODE_ENV': 'production',
+                    'WEBHOOK_URL': f'https://{username}.{domain}/',
+                    'GENERIC_TIMEZONE': 'Europe/Berlin',
+                    'EXTERNAL_HOOK_FILES': '/home/node/.n8n/hooks.js',
+                    'LOGIN_EMAIL': f'{email}',
+                    'LOGIN_PASSWORD': 'password',
+                    'N8N_HIDE_USAGE_PAGE': 'true',
+                    'N8N_PERSONALIZATION_ENABLED': 'false',
+                    'N8N_VERSION_NOTIFICATIONS_ENABLED': 'false',
+                    'NODES_EXCLUDE': '["n8n-nodes-base.executeCommand"]'
+                },
+                'volumes': [
+                    f'n8n_data_{username}:/home/node/.n8n'
+                ]
+            }
+        },
+        'volumes': {
+            f'n8n_data_{username}': {
+                'driver': 'local'
             }
         }
     }
@@ -175,6 +234,81 @@ def provision_user():
             'subdomain': f'{username}.{domain}'
         })
 
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/provision-dist', methods=['POST'])
+def provision_user_dist():
+    try:
+        data = request.get_json()
+        username = data.get('username')
+        node = data.get('node')
+
+        # replace all special characters in username with hyphens
+        username = re.sub(r'[^a-zA-Z0-9]', '-', username)
+
+        # check if username is being used
+        if users_dist.find_one({'username': username}):
+            return jsonify({'error': 'Username is already in use'}), 400
+
+        if not username:
+            return jsonify({'error': 'Username is required'}), 400
+
+        # get a random unused port
+        while True:
+            port = random.randint(49152, 65535)  # Dynamic port range
+            if not is_port_in_use(port):
+                break
+
+        # Create compose config
+        compose_config = create_compose_config_distributed(username, port, resource=node)
+
+        # Write compose file temporarily
+        compose_file = f'/tmp/docker-compose-{username}.yaml'
+        with open(compose_file, 'w') as f:
+            yaml.dump(compose_config, f)
+
+        # Use docker-compose programmatically
+        os.system(f'docker stack deploy -c {compose_file} n8n-{username}')
+
+        # Clean up
+        os.remove(compose_file)
+
+        # add to database with username, subdomain, port, container name
+        users_dist.insert_one({
+            'username': username,
+            'subdomain': f'{username}.{domain}',
+            'node': node,
+            'port': port,
+            'stack_name': f'n8n-{username}'
+        })
+
+        return jsonify({
+            'status': 'success',
+            'subdomain': f'{username}.{domain}'
+        })
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/update-dist', methods=['POST'])
+def update_user_dist():
+    try:
+        data = request.get_json()
+        username = data.get('username')
+
+        if not username:
+            return jsonify({'error': 'Username is required'}), 400
+        
+        # Get user data to retrieve port
+        user_data = users_dist.find_one({'username': username})
+        stack_name = user_data['stack_name']
+
+        os.system(f'docker service update --image 5quidw4rd/n8n-custom-amd:latest {stack_name}')
+
+        return jsonify({
+            'status': 'success'
+        })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
@@ -291,26 +425,6 @@ def update():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-
-# @app.route('/update-all', methods=['POST'])
-# def update_all():
-#     try:
-#         # Stop all containers
-#         for container in docker_client.containers.list():
-#             container.stop()
-
-#         # Pull latest image
-#         docker_client.images.pull('5quidw4rd/n8n-custom-amd:latest')
-
-#         # Start all containers
-#         for container in docker_client.containers.list():
-#             container.start()
-
-#         return jsonify({
-#             'status': 'success'
-#         })
-#     except Exception as e:
-#         return jsonify({'error': str(e)}), 500
 
 @app.route('/provision-test-windows', methods=['POST'])
 def provision_user_test():
