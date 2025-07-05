@@ -27,6 +27,9 @@ services:
       - "--providers.swarm.network=swarm-network"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.mytlschallenge.acme.tlschallenge=true"
+      - "--certificatesresolvers.mytlschallenge.acme.email=akane.ai.420@gmail.com"
+      - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
       - "--accesslog=true"
       - "--log.level=DEBUG"
     volumes:
