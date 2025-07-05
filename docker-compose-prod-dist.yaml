@@ -21,7 +21,9 @@ services:
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.swarmMode=true"
+      - "--providers.swarm.exposedbydefault=false"
+      - "--providers.swarm.network=swarm-network"
+      - "--providers.swarm=true"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
     volumes:
