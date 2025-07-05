@@ -6,9 +6,11 @@ services:
   traefik:
     image: "traefik:v3.2.3"
     deploy:
-      mode: global
       restart_policy:
         condition: any
+      placement:
+        constraints:
+          - node.role == manager
     ports:
       - "80:80"     # Web
       - "443:443"   # HTTPS
@@ -19,6 +21,7 @@ services:
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.swarmMode=true"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
     volumes:
