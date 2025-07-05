@@ -21,11 +21,13 @@ services:
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.network=swarm-network"
       - "--providers.swarm=true"
       - "--providers.swarm.exposedbydefault=false"
       - "--providers.swarm.network=swarm-network"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
+      - "--accesslog=true"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - traefik_data:/letsencrypt
@@ -39,13 +41,16 @@ services:
 
   provisioning-api:
     image: 5quidw4rd/provision-script-prod:latest
+    deploy:
+      restart_policy:
+        condition: any
+      placement:
+        constraints:
+          - node.role == manager
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     networks:
       - swarm-network
-    deploy:
-      restart_policy:
-        condition: any
     labels:
       - traefik.enable=true
       - traefik.http.routers.provision.rule=Host(`provision.${DOMAIN_NAME}`)
@@ -53,6 +58,8 @@ services:
       - traefik.http.routers.provision.tls=true
       - traefik.http.routers.provision.entrypoints=websecure
       - traefik.http.routers.provision.tls.certresolver=mytlschallenge
+      - traefik.docker.network=swarm-network
+      - traefik.swarm.network=swarm-network
 
 volumes:
   traefik_data:
